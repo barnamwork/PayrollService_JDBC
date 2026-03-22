@@ -26,6 +26,13 @@ public class EmployeePayrollService {
         System.out.println("Updated Terisa salary to 3000000.00");
         System.out.println("Terisa in sync with DB: " +
                 service.checkEmployeePayrollInSyncWithDB("Terisa"));
+
+        // ── UC4 ─────────────────────────────────────────────
+        System.out.println("\n=== UC4: Update Terisa Salary via PreparedStatement ===");
+        service.updateEmployeeSalaryWithPreparedStatement("Terisa", 3500000.00);
+        System.out.println("Updated Terisa salary to 3500000.00");
+        System.out.println("Terisa in sync with DB: " +
+                service.checkEmployeePayrollInSyncWithDB("Terisa"));
     }
 
     // ── UC2 ─────────────────────────────────────────────────
@@ -45,22 +52,41 @@ public class EmployeePayrollService {
         if (emp != null) emp.salary = salary;
     }
 
-    public boolean checkEmployeePayrollInSyncWithDB(String name) throws EmployeePayrollException {
-        List<EmployeePayrollData> dbList = dbService.getEmployeePayrollData();
-        EmployeePayrollData inMemory = findByName(name);
-        if (dbList == null || dbList.isEmpty() || inMemory == null) return false;
-        return dbList.stream()
-                .filter(e -> e.name.equalsIgnoreCase(name))
-                .findFirst()
-                .map(e -> Double.compare(e.salary, inMemory.salary) == 0)
-                .orElse(false);
+    // ── UC4 ─────────────────────────────────────────────────
+    public void updateEmployeeSalaryWithPreparedStatement(String name, double salary)
+            throws EmployeePayrollException {
+        int rows = dbService.updateEmployeeSalaryUsingPreparedStatement(name, salary);
+        if (rows == 0)
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.NO_DATA_FOUND,
+                    "Employee not found: " + name);
+        List<EmployeePayrollData> updated = dbService.getEmployeePayrollData(name);
+        if (updated != null && !updated.isEmpty())
+            syncInMemoryList(updated.get(0));
     }
 
-    // ── Helper ───────────────────────────────────────────────
+    public boolean checkEmployeePayrollInSyncWithDB(String name) throws EmployeePayrollException {
+        List<EmployeePayrollData> dbList = dbService.getEmployeePayrollData(name);
+        EmployeePayrollData inMemory = findByName(name);
+        if (dbList == null || dbList.isEmpty() || inMemory == null) return false;
+        return Double.compare(dbList.get(0).salary, inMemory.salary) == 0;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────
     private EmployeePayrollData findByName(String name) {
         if (employeePayrollList == null) return null;
         return employeePayrollList.stream()
                 .filter(e -> e.name.equalsIgnoreCase(name))
                 .findFirst().orElse(null);
+    }
+
+    private void syncInMemoryList(EmployeePayrollData updated) {
+        if (employeePayrollList == null) return;
+        for (int i = 0; i < employeePayrollList.size(); i++) {
+            if (employeePayrollList.get(i).name.equalsIgnoreCase(updated.name)) {
+                employeePayrollList.set(i, updated);
+                return;
+            }
+        }
     }
 }

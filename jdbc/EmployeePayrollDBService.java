@@ -15,6 +15,10 @@ public class EmployeePayrollDBService {
     private static EmployeePayrollDBService instance;
     private Connection connection;
 
+    // UC4: Cached PreparedStatements
+    private PreparedStatement getEmployeePayrollDataStatement;
+    private PreparedStatement updateSalaryStatement;
+
     private EmployeePayrollDBService() {}
 
     public static EmployeePayrollDBService getInstance() {
@@ -57,6 +61,60 @@ public class EmployeePayrollDBService {
         }
     }
 
+    // ── UC4: Retrieve by name via cached PreparedStatement ───
+    public List<EmployeePayrollData> getEmployeePayrollData(String name)
+            throws EmployeePayrollException {
+        if (getEmployeePayrollDataStatement == null)
+            prepareStatementForEmployeeData();
+        try {
+            getEmployeePayrollDataStatement.setString(1, name);
+            ResultSet rs = getEmployeePayrollDataStatement.executeQuery();
+            return mapResultSetToList(rs);
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.DATABASE_EXCEPTION,
+                    "Error fetching data for: " + name, e);
+        }
+    }
+
+    private void prepareStatementForEmployeeData() throws EmployeePayrollException {
+        try {
+            String sql = "SELECT * FROM employee_payroll WHERE name = ?;";
+            getEmployeePayrollDataStatement = getConnection().prepareStatement(sql);
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.DATABASE_EXCEPTION,
+                    "Error preparing select statement", e);
+        }
+    }
+
+    // ── UC4: Update salary via cached PreparedStatement ──────
+    public int updateEmployeeSalaryUsingPreparedStatement(String name, double salary)
+            throws EmployeePayrollException {
+        if (updateSalaryStatement == null)
+            prepareStatementForSalaryUpdate();
+        try {
+            updateSalaryStatement.setDouble(1, salary);
+            updateSalaryStatement.setString(2, name);
+            return updateSalaryStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.UPDATE_FAILED,
+                    "Error updating salary (PreparedStatement) for: " + name, e);
+        }
+    }
+
+    private void prepareStatementForSalaryUpdate() throws EmployeePayrollException {
+        try {
+            String sql = "UPDATE employee_payroll SET basic_pay = ? WHERE name = ?;";
+            updateSalaryStatement = getConnection().prepareStatement(sql);
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.DATABASE_EXCEPTION,
+                    "Error preparing update statement", e);
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────
     private List<EmployeePayrollData> executeSelectQuery(String sql) throws EmployeePayrollException {
         try (Statement stmt = getConnection().createStatement();
@@ -69,6 +127,7 @@ public class EmployeePayrollDBService {
         }
     }
 
+    // UC4 Refactor: Reusable ResultSet mapper
     private List<EmployeePayrollData> mapResultSetToList(ResultSet rs) throws SQLException {
         List<EmployeePayrollData> list = new ArrayList<>();
         while (rs.next()) {
