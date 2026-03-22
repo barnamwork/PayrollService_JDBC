@@ -1,4 +1,5 @@
 package jdbc;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,12 +38,26 @@ public class EmployeePayrollDBService {
         }
     }
 
-    // ── UC2: Retrieve all employee payroll data ──────────────
+    // ── UC2: Retrieve all ────────────────────────────────────
     public List<EmployeePayrollData> getEmployeePayrollData() throws EmployeePayrollException {
         String sql = "SELECT * FROM employee_payroll;";
         return executeSelectQuery(sql);
     }
 
+    // ── UC3: Update salary via Statement ────────────────────
+    public int updateEmployeeSalary(String name, double salary) throws EmployeePayrollException {
+        String sql = String.format(
+                "UPDATE employee_payroll SET basic_pay = %.2f WHERE name = '%s';", salary, name);
+        try (Statement stmt = getConnection().createStatement()) {
+            return stmt.executeUpdate(sql);
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.UPDATE_FAILED,
+                    "Error updating salary for: " + name, e);
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────
     private List<EmployeePayrollData> executeSelectQuery(String sql) throws EmployeePayrollException {
         try (Statement stmt = getConnection().createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
