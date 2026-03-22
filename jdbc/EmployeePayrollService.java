@@ -1,5 +1,6 @@
 package jdbc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class EmployeePayrollService {
@@ -33,6 +34,13 @@ public class EmployeePayrollService {
         System.out.println("Updated Terisa salary to 3500000.00");
         System.out.println("Terisa in sync with DB: " +
                 service.checkEmployeePayrollInSyncWithDB("Terisa"));
+
+        // ── UC5 ─────────────────────────────────────────────
+        System.out.println("\n=== UC5: Employees who joined between 2018-01-01 and today ===");
+        List<EmployeePayrollData> rangeList = service.readEmployeePayrollDataForDateRange(
+                LocalDate.of(2018, 1, 1), LocalDate.now());
+        rangeList.forEach(System.out::println);
+        System.out.println("Total Employees in range: " + rangeList.size());
     }
 
     // ── UC2 ─────────────────────────────────────────────────
@@ -70,6 +78,12 @@ public class EmployeePayrollService {
         EmployeePayrollData inMemory = findByName(name);
         if (dbList == null || dbList.isEmpty() || inMemory == null) return false;
         return Double.compare(dbList.get(0).salary, inMemory.salary) == 0;
+    }
+
+    // ── UC5 ─────────────────────────────────────────────────
+    public List<EmployeePayrollData> readEmployeePayrollDataForDateRange(
+            LocalDate start, LocalDate end) throws EmployeePayrollException {
+        return dbService.getEmployeePayrollDataForDateRange(start, end);
     }
 
     // ── Helpers ─────────────────────────────────────────────

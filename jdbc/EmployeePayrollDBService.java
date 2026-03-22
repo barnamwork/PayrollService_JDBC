@@ -15,7 +15,6 @@ public class EmployeePayrollDBService {
     private static EmployeePayrollDBService instance;
     private Connection connection;
 
-    // UC4: Cached PreparedStatements
     private PreparedStatement getEmployeePayrollDataStatement;
     private PreparedStatement updateSalaryStatement;
 
@@ -115,6 +114,15 @@ public class EmployeePayrollDBService {
         }
     }
 
+    // ── UC5: Retrieve by date range ──────────────────────────
+    public List<EmployeePayrollData> getEmployeePayrollDataForDateRange(
+            LocalDate startDate, LocalDate endDate) throws EmployeePayrollException {
+        String sql = String.format(
+                "SELECT * FROM employee_payroll WHERE start BETWEEN CAST('%s' AS DATE) AND CAST('%s' AS DATE);",
+                startDate, endDate);
+        return executeSelectQuery(sql);
+    }
+
     // ── Helpers ──────────────────────────────────────────────
     private List<EmployeePayrollData> executeSelectQuery(String sql) throws EmployeePayrollException {
         try (Statement stmt = getConnection().createStatement();
@@ -127,7 +135,6 @@ public class EmployeePayrollDBService {
         }
     }
 
-    // UC4 Refactor: Reusable ResultSet mapper
     private List<EmployeePayrollData> mapResultSetToList(ResultSet rs) throws SQLException {
         List<EmployeePayrollData> list = new ArrayList<>();
         while (rs.next()) {
