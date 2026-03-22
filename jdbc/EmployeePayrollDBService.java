@@ -3,7 +3,9 @@ package jdbc;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EmployeePayrollDBService {
 
@@ -121,6 +123,61 @@ public class EmployeePayrollDBService {
                 "SELECT * FROM employee_payroll WHERE start BETWEEN CAST('%s' AS DATE) AND CAST('%s' AS DATE);",
                 startDate, endDate);
         return executeSelectQuery(sql);
+    }
+
+    // ── UC6: Aggregation by gender ───────────────────────────
+    public Map<String, Double> getAvgSalaryByGender() throws EmployeePayrollException {
+        return getGenderDoubleResult(
+                "SELECT gender, AVG(basic_pay) AS avg_salary FROM employee_payroll GROUP BY gender;",
+                "avg_salary");
+    }
+
+    public Map<String, Double> getSumSalaryByGender() throws EmployeePayrollException {
+        return getGenderDoubleResult(
+                "SELECT gender, SUM(basic_pay) AS sum_salary FROM employee_payroll GROUP BY gender;",
+                "sum_salary");
+    }
+
+    public Map<String, Double> getMinSalaryByGender() throws EmployeePayrollException {
+        return getGenderDoubleResult(
+                "SELECT gender, MIN(basic_pay) AS min_salary FROM employee_payroll GROUP BY gender;",
+                "min_salary");
+    }
+
+    public Map<String, Double> getMaxSalaryByGender() throws EmployeePayrollException {
+        return getGenderDoubleResult(
+                "SELECT gender, MAX(basic_pay) AS max_salary FROM employee_payroll GROUP BY gender;",
+                "max_salary");
+    }
+
+    public Map<String, Long> getCountByGender() throws EmployeePayrollException {
+        Map<String, Long> result = new HashMap<>();
+        String sql = "SELECT gender, COUNT(*) AS emp_count FROM employee_payroll GROUP BY gender;";
+        try (Statement stmt = getConnection().createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next())
+                result.put(rs.getString("gender"), rs.getLong("emp_count"));
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.DATABASE_EXCEPTION,
+                    "Error fetching count by gender", e);
+        }
+        return result;
+    }
+
+    private Map<String, Double> getGenderDoubleResult(String sql, String column)
+            throws EmployeePayrollException {
+        Map<String, Double> result = new HashMap<>();
+        try (Statement stmt = getConnection().createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next())
+                result.put(rs.getString("gender"), rs.getDouble(column));
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.DATABASE_EXCEPTION,
+                    "Error executing aggregate query", e);
+        }
+        return result;
     }
 
     // ── Helpers ──────────────────────────────────────────────

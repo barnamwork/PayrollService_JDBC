@@ -2,6 +2,7 @@ package jdbc;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public class EmployeePayrollService {
 
@@ -41,6 +42,27 @@ public class EmployeePayrollService {
                 LocalDate.of(2018, 1, 1), LocalDate.now());
         rangeList.forEach(System.out::println);
         System.out.println("Total Employees in range: " + rangeList.size());
+
+        // ── UC6 ─────────────────────────────────────────────
+        System.out.println("\n=== UC6: Average Salary by Gender ===");
+        service.readAvgSalaryByGender().forEach((gender, avg) ->
+                System.out.println(gender + " : " + avg));
+
+        System.out.println("\n=== UC6: Sum Salary by Gender ===");
+        service.readSumSalaryByGender().forEach((gender, sum) ->
+                System.out.println(gender + " : " + sum));
+
+        System.out.println("\n=== UC6: Min Salary by Gender ===");
+        service.readMinSalaryByGender().forEach((gender, min) ->
+                System.out.println(gender + " : " + min));
+
+        System.out.println("\n=== UC6: Max Salary by Gender ===");
+        service.readMaxSalaryByGender().forEach((gender, max) ->
+                System.out.println(gender + " : " + max));
+
+        System.out.println("\n=== UC6: Count by Gender ===");
+        service.readCountByGender().forEach((gender, count) ->
+                System.out.println(gender + " : " + count));
     }
 
     // ── UC2 ─────────────────────────────────────────────────
@@ -84,6 +106,27 @@ public class EmployeePayrollService {
     public List<EmployeePayrollData> readEmployeePayrollDataForDateRange(
             LocalDate start, LocalDate end) throws EmployeePayrollException {
         return dbService.getEmployeePayrollDataForDateRange(start, end);
+    }
+
+    // ── UC6 ─────────────────────────────────────────────────
+    public Map<String, Double> readAvgSalaryByGender() throws EmployeePayrollException {
+        return dbService.getAvgSalaryByGender();
+    }
+
+    public Map<String, Double> readSumSalaryByGender() throws EmployeePayrollException {
+        return dbService.getSumSalaryByGender();
+    }
+
+    public Map<String, Double> readMinSalaryByGender() throws EmployeePayrollException {
+        return dbService.getMinSalaryByGender();
+    }
+
+    public Map<String, Double> readMaxSalaryByGender() throws EmployeePayrollException {
+        return dbService.getMaxSalaryByGender();
+    }
+
+    public Map<String, Long> readCountByGender() throws EmployeePayrollException {
+        return dbService.getCountByGender();
     }
 
     // ── Helpers ─────────────────────────────────────────────
