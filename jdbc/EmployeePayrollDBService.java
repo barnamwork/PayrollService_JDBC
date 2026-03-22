@@ -1,6 +1,8 @@
 package jdbc;
-
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EmployeePayrollDBService {
 
@@ -35,14 +37,33 @@ public class EmployeePayrollDBService {
         }
     }
 
-    // ── UC1: main — test DB connection ──────────────────────
-    public static void main(String[] args) {
-        try {
-            EmployeePayrollDBService dbService = EmployeePayrollDBService.getInstance();
-            dbService.getConnection();
-            System.out.println("=== UC1: Connection to payroll_service DB successful ===");
-        } catch (EmployeePayrollException e) {
-            System.out.println("Connection failed: " + e.getMessage());
+    // ── UC2: Retrieve all employee payroll data ──────────────
+    public List<EmployeePayrollData> getEmployeePayrollData() throws EmployeePayrollException {
+        String sql = "SELECT * FROM employee_payroll;";
+        return executeSelectQuery(sql);
+    }
+
+    private List<EmployeePayrollData> executeSelectQuery(String sql) throws EmployeePayrollException {
+        try (Statement stmt = getConnection().createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            return mapResultSetToList(rs);
+        } catch (SQLException e) {
+            throw new EmployeePayrollException(
+                    EmployeePayrollException.ExceptionType.DATABASE_EXCEPTION,
+                    "Query failed: " + sql, e);
         }
+    }
+
+    private List<EmployeePayrollData> mapResultSetToList(ResultSet rs) throws SQLException {
+        List<EmployeePayrollData> list = new ArrayList<>();
+        while (rs.next()) {
+            int id          = rs.getInt("id");
+            String name     = rs.getString("name");
+            String gender   = rs.getString("gender");
+            double salary   = rs.getDouble("basic_pay");
+            LocalDate start = rs.getDate("start").toLocalDate();
+            list.add(new EmployeePayrollData(id, name, gender, salary, start));
+        }
+        return list;
     }
 }
