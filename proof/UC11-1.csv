@@ -1,0 +1,5 @@
+employee_id,name,gender,phone_number,address,start
+1,Bill,M,NULL,TBD,2018-01-03
+2,Terisa,F,NULL,TBD,2018-01-03
+3,Mark,M,NULL,TBD,2019-11-13
+4,Charlie,M,NULL,TBD,2020-05-21

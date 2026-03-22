@@ -1,0 +1,5 @@
+payroll_id,employee_id,basic_pay,deductions,taxable_pay,tax,net_pay
+1,1,1000000,0,0,0,0
+2,2,3000000,1000000,2000000,500000,1500000
+3,3,2000000,0,0,0,0
+4,4,3000000,0,0,0,0
